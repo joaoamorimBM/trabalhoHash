@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { mockData } from './mockData';
-import './App.css'
+import './App.css';
+import { fetchLoadData, fetchBuildIndex, fetchSearch } from './services/api';
 
 export default function App() {
   // Configurações
@@ -13,21 +14,38 @@ export default function App() {
   const [indexData, setIndexData] = useState(null);
   const [searchResult, setSearchResult] = useState(null);
 
-  // Simulações de chamadas para o Back-end
-  const handleLoadData = () => {
+  const handleLoadData = async () => {
+  try {
+    const data = await fetchLoadData(pageSize);
+    setLoadedData(data);
+  } catch (err) {
+    console.warn("Servidor Python offline, carregando mockData...", err);
     setLoadedData(mockData.loadData);
-  };
+  }
+};
 
-  const handleBuildIndex = () => {
+const handleBuildIndex = async () => {
+  try {
+    const data = await fetchBuildIndex(bucketCapacity);
+    setIndexData(data);
+  } catch (err) {
+    console.warn("Servidor Python offline, carregando mockData...", err);
     setIndexData(mockData.buildIndex);
-  };
+  }
+};
 
-  const handleSearchIndex = () => {
+const handleSearchIndex = async () => {
+  try {
+    const data = await fetchSearch(searchKey);
+    setSearchResult(data);
+  } catch (err) {
+    console.warn("Servidor Python offline, carregando mockData...", err);
     setSearchResult({
       index: mockData.searchIndexResult,
       scan: mockData.searchScanResult
     });
-  };
+  }
+};
 
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '1000px', margin: '0 auto' }}>
@@ -61,20 +79,22 @@ export default function App() {
       </section>
 
       {/* 2. VISUALIZAÇÃO DAS PÁGINAS (PRIMEIRA E ÚLTIMA) */}
-      {loadedData && (
+      {loadedData && !loadedData.error && (
         <section style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
-          <h2>2. Estrutura de Páginas ({loadedData.totalWords.toLocaleString()} palavras em {loadedData.totalPages} páginas)</h2>
+          <h2>
+            2. Estrutura de Páginas ({loadedData.totalWords?.toLocaleString() || 0} palavras em {loadedData.totalPages || 0} páginas)
+          </h2>
           <div style={{ display: 'flex', gap: '20px' }}>
             <div style={{ flex: 1, background: '#f9f9f9', padding: '10px', borderRadius: '4px' }}>
-              <h3>Primeira Página (Página #{loadedData.firstPage.pageNumber})</h3>
+              <h3>Primeira Página (Página #{loadedData.firstPage?.pageNumber || 1})</h3>
               <ul>
-                {loadedData.firstPage.records.map((word, i) => <li key={i}>{word}</li>)}
+                {loadedData.firstPage?.records?.map((word, i) => <li key={i}>{word}</li>)}
               </ul>
             </div>
             <div style={{ flex: 1, background: '#f9f9f9', padding: '10px', borderRadius: '4px' }}>
-              <h3>Última Página (Página #{loadedData.lastPage.pageNumber})</h3>
+              <h3>Última Página (Página #{loadedData.lastPage?.pageNumber || 1})</h3>
               <ul>
-                {loadedData.lastPage.records.map((word, i) => <li key={i}>{word}</li>)}
+                {loadedData.lastPage?.records?.map((word, i) => <li key={i}>{word}</li>)}
               </ul>
             </div>
           </div>
@@ -83,12 +103,45 @@ export default function App() {
 
       {/* 3. MÉTRICAS E ESTATÍSTICAS DO HASH */}
       {indexData && (
-        <section style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '8px', marginBottom: '20px', background: '#eef6ff' }}>
+        <section style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '8px', marginBottom: '20px', background: '#eef6ff', color: '#1a1a1a' }}>
           <h2>3. Estatísticas do Índice Hash</h2>
           <p><strong>Total de Buckets (NB):</strong> {indexData.totalBuckets}</p>
           <p><strong>Tempo de Construção:</strong> {indexData.buildTimeMs} ms</p>
           <p><strong>Taxa de Colisões:</strong> {indexData.collisionRate}%</p>
           <p><strong>Taxa de Overflow:</strong> {indexData.overflowRate}%</p>
+        </section>
+      )}
+
+      {/* Na renderização do App: */}
+      {indexData && (
+        <section style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
+          <h2>5. Visualizador de Buckets (CA28)</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
+            {mockData.bucketsPage.map((bucket) => (
+              <div 
+                key={bucket.id} 
+                style={{ 
+                  border: searchResult?.index?.bucketIndex === bucket.id ? '2px solid #70ad47' : '1px solid #ddd',
+                  backgroundColor: searchResult?.index?.bucketIndex === bucket.id ? '#e2f0d9' : '#fafafa',
+                  padding: '10px', 
+                  borderRadius: '6px' 
+                }}
+              >
+                <strong>Bucket #{bucket.id}</strong>
+                <ul style={{ paddingLeft: '20px', margin: '5px 0 0 0' }}>
+                  {bucket.keys.length > 0 ? (
+                    bucket.keys.map((k, i) => (
+                      <li key={i} style={{ fontWeight: k.key === searchKey ? 'bold' : 'normal' }}>
+                        {k.key} &rarr; Pág #{k.page}
+                      </li>
+                    ))
+                  ) : (
+                    <li style={{ color: '#888', listStyle: 'none' }}><em>Vazio</em></li>
+                  )}
+                </ul>
+              </div>
+            ))}
+          </div>
         </section>
       )}
 
