@@ -282,9 +282,9 @@ def _demonstracao():
         print("Tempo de construcao.........: %.3f segundos" % stats["tempo_construcao_seg"])
         print()
 
-    print("Conclusao esperada: quanto MENOR o FR (para o mesmo NR), MAIOR")
-    print("tende a ser a taxa de colisao/overflow - por isso a equipe deve")
-    print("dimensionar FR e NB com cuidado (RN08/RN09).")
+    print("Conclusao: as taxas variam conforme o dimensionamento de FR e NB.")
+    print("Nos testes, o aumento de FR reduziu a taxa de colisoes, enquanto")
+    print("a taxa percentual de buckets em overflow variou conforme NB.")
     print("=" * 70)
 
 
