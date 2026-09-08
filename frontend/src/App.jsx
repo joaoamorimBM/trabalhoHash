@@ -14,38 +14,49 @@ export default function App() {
   const [indexData, setIndexData] = useState(null);
   const [searchResult, setSearchResult] = useState(null);
 
+  const [loading, setLoading] = useState(false);
+
   const handleLoadData = async () => {
-  try {
-    const data = await fetchLoadData(pageSize);
-    setLoadedData(data);
-  } catch (err) {
-    console.warn("Servidor Python offline, carregando mockData...", err);
-    setLoadedData(mockData.loadData);
-  }
-};
+    setLoading(true);
+    try {
+      const data = await fetchLoadData(pageSize);
+      setLoadedData(data);
+    } catch (err) {
+      console.warn("Servidor Python offline, carregando mockData...", err);
+      setLoadedData(mockData.loadData);
+    } finally {
+      setLoading(false);
+    }
+  };
 
 const handleBuildIndex = async () => {
-  try {
-    const data = await fetchBuildIndex(bucketCapacity);
-    setIndexData(data);
-  } catch (err) {
-    console.warn("Servidor Python offline, carregando mockData...", err);
-    setIndexData(mockData.buildIndex);
-  }
-};
+    setLoading(true);
+    try {
+      const data = await fetchBuildIndex(bucketCapacity);
+      setIndexData(data);
+    } catch (err) {
+      console.warn("Servidor Python offline, carregando mockData...", err);
+      setIndexData(mockData.buildIndex);
+    } finally {
+      setLoading(false);
+    }
+  };
 
 const handleSearchIndex = async () => {
-  try {
-    const data = await fetchSearch(searchKey);
-    setSearchResult(data);
-  } catch (err) {
-    console.warn("Servidor Python offline, carregando mockData...", err);
-    setSearchResult({
-      index: mockData.searchIndexResult,
-      scan: mockData.searchScanResult
-    });
-  }
-};
+    setLoading(true);
+    try {
+      const data = await fetchSearch(searchKey);
+      setSearchResult(data);
+    } catch (err) {
+      console.warn("Servidor Python offline, carregando mockData...", err);
+      setSearchResult({
+        index: mockData.searchIndexResult,
+        scan: mockData.searchScanResult
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '1000px', margin: '0 auto' }}>
@@ -73,8 +84,23 @@ const handleSearchIndex = async () => {
               style={{ marginLeft: '8px', padding: '4px' }}
             />
           </label>
-          <button onClick={handleLoadData} style={{ padding: '6px 12px', cursor: 'pointer' }}>Carregar Arquivo</button>
-          <button onClick={handleBuildIndex} disabled={!loadedData} style={{ padding: '6px 12px', cursor: 'pointer' }}>Construir Índice</button>
+
+          {/* 3. BOTÕES ATUALIZADOS COM ESTADO E FEEDBACK VISUAL DE LOADING */}
+          <button 
+            onClick={handleLoadData} 
+            disabled={loading}
+            style={{ padding: '6px 12px', cursor: loading ? 'not-allowed' : 'pointer' }}
+          >
+            {loading ? 'Carregando...' : 'Carregar Arquivo'}
+          </button>
+
+          <button 
+            onClick={handleBuildIndex} 
+            disabled={!loadedData || loading}
+            style={{ padding: '6px 12px', cursor: (loading || !loadedData) ? 'not-allowed' : 'pointer' }}
+          >
+            {loading ? 'Construindo...' : 'Construir Índice'}
+          </button>
         </div>
       </section>
 
@@ -112,12 +138,12 @@ const handleSearchIndex = async () => {
         </section>
       )}
 
-      {/* Na renderização do App: */}
+      {/* VISUALIZADOR DE BUCKETS REAL (CA28) */}
       {indexData && (
         <section style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
           <h2>5. Visualizador de Buckets (CA28)</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
-            {mockData.bucketsPage.map((bucket) => (
+            {(indexData.bucketsPage || mockData.bucketsPage).map((bucket) => (
               <div 
                 key={bucket.id} 
                 style={{ 
@@ -157,7 +183,14 @@ const handleSearchIndex = async () => {
               onChange={(e) => setSearchKey(e.target.value)}
               style={{ flex: 1, padding: '8px' }}
             />
-            <button onClick={handleSearchIndex} style={{ padding: '8px 16px', cursor: 'pointer' }}>Buscar</button>
+            {/* BOTÃO DE BUSCA TAMBÉM ATUALIZADO COM LOADING */}
+            <button 
+              onClick={handleSearchIndex} 
+              disabled={loading}
+              style={{ padding: '8px 16px', cursor: loading ? 'not-allowed' : 'pointer' }}
+            >
+              {loading ? 'Buscando...' : 'Buscar'}
+            </button>
           </div>
 
           {searchResult && (
