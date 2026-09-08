@@ -1,4 +1,12 @@
+import os
+import sys
 import time
+
+_BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(_BASE, "Epic02"))
+sys.path.insert(0, os.path.join(_BASE, "Epic01"))
+
+from epic2 import construir_indice
 
 
 def carregar_palavras(caminho):
@@ -47,69 +55,6 @@ def table_scan(paginas, chave):
         if chave in pagina:
             return numero
     return None
-
-
-def funcao_hash(chave, nb):
-    h = 0
-    for letra in chave:
-        h = (h * 31 + ord(letra)) % nb
-    return h
-
-
-class Bucket:
-    def __init__(self, capacidade):
-        self.capacidade = capacidade
-        self.entradas = []
-        self.overflow = []
-
-    def inserir(self, chave, pagina):
-        if len(self.entradas) < self.capacidade:
-            self.entradas.append((chave, pagina))
-        else:
-            self.overflow.append((chave, pagina))
-
-    def total(self):
-        return len(self.entradas) + len(self.overflow)
-
-
-class IndiceHash:
-    def __init__(self, nr, fr):
-        if fr <= 0:
-            raise ValueError("FR (capacidade do bucket) deve ser maior que zero.")
-        self.nr = nr
-        self.fr = fr
-        self.nb = (nr // fr) + 1
-        if self.nb <= nr / fr:
-            raise ValueError("NB inválido: precisa ser maior que NR/FR.")
-        self.buckets = [Bucket(fr) for _ in range(self.nb)]
-        self.tempo_construcao = None
-
-    def inserir(self, chave, pagina):
-        endereco_bucket = funcao_hash(chave, self.nb)
-        self.buckets[endereco_bucket].inserir(chave, pagina)
-
-    def buscar(self, chave):
-        endereco_bucket = funcao_hash(chave, self.nb)
-        bucket = self.buckets[endereco_bucket]
-        for (c, pagina) in bucket.entradas:
-            if c == chave:
-                return pagina
-        for (c, pagina) in bucket.overflow:
-            if c == chave:
-                return pagina
-        return None
-
-
-def construir_indice(paginas, fr):
-    nr = sum(len(pagina) for pagina in paginas)
-    indice = IndiceHash(nr, fr)
-    inicio = time.perf_counter()
-    for numero_pagina, pagina in enumerate(paginas):
-        for chave in pagina:
-            indice.inserir(chave, numero_pagina)
-    fim = time.perf_counter()
-    indice.tempo_construcao = fim - inicio
-    return indice
 
 
 def main():
