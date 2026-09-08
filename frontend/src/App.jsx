@@ -183,7 +183,6 @@ const handleSearchIndex = async () => {
               onChange={(e) => setSearchKey(e.target.value)}
               style={{ flex: 1, padding: '8px' }}
             />
-            {/* BOTÃO DE BUSCA TAMBÉM ATUALIZADO COM LOADING */}
             <button 
               onClick={handleSearchIndex} 
               disabled={loading}
@@ -201,7 +200,7 @@ const handleSearchIndex = async () => {
                   <tr style={{ background: '#eee' }}>
                     <th>Métrica</th>
                     <th>Busca por Índice</th>
-                    <th>Table Scan</th>
+                    <th>Table Scan (Epic 5)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -212,8 +211,8 @@ const handleSearchIndex = async () => {
                   </tr>
                   <tr>
                     <td>Página Encontrada</td>
-                    <td>Página #{searchResult.index.pageNumber}</td>
-                    <td>Página #{searchResult.scan.pageNumber}</td>
+                    <td>{searchResult.index.pageNumber > -1 ? `Página #${searchResult.index.pageNumber}` : 'N/A'}</td>
+                    <td>{searchResult.scan.pageNumber > -1 ? `Página #${searchResult.scan.pageNumber}` : 'N/A'}</td>
                   </tr>
                   <tr>
                     <td>Custo (Acessos a Disco)</td>
@@ -228,8 +227,19 @@ const handleSearchIndex = async () => {
                 </tbody>
               </table>
 
+              {/* MÉTRICAS COMPARATIVAS DO EPIC 05 */}
+              {searchResult.comparison && (
+                <div style={{ marginTop: '15px', padding: '12px', background: '#eef6ff', border: '1px solid #b6d4fe', borderRadius: '4px', color: '#1a1a1a' }}>
+                  <strong>Métricas Comparativas (Epic 5):</strong>
+                  <ul style={{ margin: '5px 0 0 0', paddingLeft: '20px' }}>
+                    <li><strong>Redução Percentual de Custo:</strong> {searchResult.comparison.costReductionPct}%</li>
+                    <li><strong>Ganho Percentual de Desempenho de Tempo:</strong> {searchResult.comparison.timeDifferencePct}%</li>
+                  </ul>
+                </div>
+              )}
+
               {/* DESTAQUE VISUAL (CA29) */}
-              <div style={{ marginTop: '15px', padding: '10px', background: '#e2f0d9', border: '1px solid #70ad47', borderRadius: '4px' }}>
+              <div style={{ marginTop: '10px', padding: '10px', background: '#e2f0d9', border: '1px solid #70ad47', borderRadius: '4px', color: '#1a1a1a' }}>
                 <strong>Destaque Visual de Acesso:</strong> 
                 <br />
                 Bucket Acessado: <code>#{searchResult.index.bucketIndex}</code> | Página Acessada: <code>#{searchResult.index.pageNumber}</code>
