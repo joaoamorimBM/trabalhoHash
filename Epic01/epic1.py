@@ -21,10 +21,10 @@ def solicitar_tamanho_pagina():
 
 
 def dividir_em_paginas(palavras, tamanho_pagina):
-    paginas = []
-    for inicio in range(0, len(palavras), tamanho_pagina):
-        pagina = palavras[inicio : inicio + tamanho_pagina]
-        paginas.append(pagina)
+    quantidade = (len(palavras) + tamanho_pagina - 1) // tamanho_pagina
+    paginas = [[] for _ in range(quantidade)]
+    for indice, palavra in enumerate(palavras):
+        paginas[indice // tamanho_pagina].append(palavra)
     return paginas
 
 
